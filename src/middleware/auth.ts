@@ -8,7 +8,8 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   }
 
   const token = authHeader.slice(7);
-  if (token !== process.env.ORBIT_API_KEY) {
+  const configuredKey = process.env.ORBIT_API_KEY;
+  if (!configuredKey || token !== configuredKey) {
     res.status(401).json({ error: 'Invalid API key' });
     return;
   }

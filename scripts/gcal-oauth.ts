@@ -5,16 +5,19 @@
  * Set these env vars before running (or pass inline):
  *   GCAL_CLIENT_ID, GCAL_CLIENT_SECRET
  *
- * Follow the printed URL, authorize, paste the code back, and copy the
- * refresh_token into your .env file.
+ * A browser tab will open (or print a URL to visit). After authorizing,
+ * Google redirects to localhost and the script captures the code automatically.
+ * Copy the printed refresh_token into your .env file.
  */
 
 import 'dotenv/config';
 import { google } from 'googleapis';
-import * as readline from 'readline';
+import * as http from 'http';
+import * as url from 'url';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-const REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob';
+const PORT = 3333;
+const REDIRECT_URI = `http://127.0.0.1:${PORT}/oauth2callback`;
 
 async function main() {
   const clientId = process.env.GCAL_CLIENT_ID;
@@ -35,14 +38,33 @@ async function main() {
 
   console.log('\nOpen this URL in your browser:\n');
   console.log(authUrl);
-  console.log();
+  console.log('\nWaiting for Google to redirect back...\n');
 
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const code = await new Promise<string>((resolve) => {
-    rl.question('Paste the authorization code here: ', (answer) => {
-      rl.close();
-      resolve(answer.trim());
+  const code = await new Promise<string>((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const parsed = url.parse(req.url ?? '', true);
+      const code = parsed.query['code'];
+      const error = parsed.query['error'];
+
+      if (error) {
+        res.end(`<h1>Authorization failed: ${error}</h1>`);
+        server.close();
+        reject(new Error(`OAuth error: ${error}`));
+        return;
+      }
+
+      if (typeof code === 'string') {
+        res.end('<h1>Authorization successful — you can close this tab.</h1>');
+        server.close();
+        resolve(code);
+      }
     });
+
+    server.listen(PORT, '127.0.0.1', () => {
+      console.log(`Listening on ${REDIRECT_URI}`);
+    });
+
+    server.on('error', reject);
   });
 
   const { tokens } = await oauth2Client.getToken(code);
