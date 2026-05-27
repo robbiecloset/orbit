@@ -17,7 +17,7 @@ function getOAuthClient(account: Account) {
   return auth;
 }
 
-function getWeekBounds(): { timeMin: string; timeMax: string } {
+export function getWeekBounds(): { timeMin: string; timeMax: string } {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0 = Sunday
   const startOfWeek = new Date(now);
