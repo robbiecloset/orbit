@@ -2,14 +2,18 @@ import { google } from 'googleapis';
 import { CalendarEvent, Account } from '../types';
 
 function getOAuthClient(account: Account) {
-  const prefix = account === 'personal' ? 'GCAL_PERSONAL' : 'GCAL_WORK';
+  const clientId = process.env.GCAL_CLIENT_ID;
+  const clientSecret = process.env.GCAL_CLIENT_SECRET;
+  const refreshToken =
+    account === 'personal'
+      ? process.env.GCAL_PERSONAL_REFRESH_TOKEN
+      : process.env.GCAL_WORK_REFRESH_TOKEN;
 
-  const clientId = process.env[`${prefix}_CLIENT_ID`];
-  const clientSecret = process.env[`${prefix}_CLIENT_SECRET`];
-  const refreshToken = process.env[`${prefix}_REFRESH_TOKEN`];
-
-  if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error(`Missing Google Calendar credentials for ${account} account`);
+  if (!clientId || !clientSecret) {
+    throw new Error('GCAL_CLIENT_ID and GCAL_CLIENT_SECRET must be set');
+  }
+  if (!refreshToken) {
+    throw new Error(`Missing Google Calendar refresh token for ${account} account`);
   }
 
   const auth = new google.auth.OAuth2(clientId, clientSecret);

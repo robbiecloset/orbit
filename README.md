@@ -42,31 +42,42 @@ ORBIT_API_KEY=          # any secret string you choose
 LINEAR_PERSONAL_TOKEN=  # Linear: Settings → API → Personal API tokens
 LINEAR_WORK_TOKEN=
 
-GCAL_PERSONAL_CLIENT_ID=
-GCAL_PERSONAL_CLIENT_SECRET=
-GCAL_PERSONAL_REFRESH_TOKEN=
+GCAL_CLIENT_ID=          # shared by both accounts
+GCAL_CLIENT_SECRET=
 
-GCAL_WORK_CLIENT_ID=
-GCAL_WORK_CLIENT_SECRET=
+GCAL_PERSONAL_REFRESH_TOKEN=
 GCAL_WORK_REFRESH_TOKEN=
 ```
 
 ### 3. Get Google Calendar refresh tokens
 
-For each Google account:
+You only need **one** OAuth app — it can live in a personal Google Cloud
+project and still authorize your work account. A refresh token is tied to
+whichever account you sign in as during the consent flow, not to the project
+that owns the OAuth app.
+
+One-time setup:
 
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com)
 2. Enable the **Google Calendar API**
-3. Create **OAuth 2.0 credentials** (Desktop app type), download the client ID and secret
-4. Run the helper script:
+3. Create **OAuth 2.0 credentials** (Desktop app type), download the client ID and secret into `GCAL_CLIENT_ID` / `GCAL_CLIENT_SECRET`
+
+Then, **for each account** (personal and work), run the helper script and sign
+in as that account:
 
 ```bash
 GCAL_CLIENT_ID=<your-client-id> GCAL_CLIENT_SECRET=<your-client-secret> npm run oauth-gcal
 ```
 
-Follow the URL it prints, authorize the app, paste the code back, and copy the `refresh_token` into your `.env`.
+A browser tab opens; authorize, and the script captures the code automatically.
+Copy the printed `refresh_token` into the matching env var
+(`GCAL_PERSONAL_REFRESH_TOKEN` or `GCAL_WORK_REFRESH_TOKEN`).
 
-Repeat for the second account.
+> **Note:** if the OAuth consent screen is left in "Testing" mode, Google
+> expires unverified refresh tokens after 7 days. Publish the app to
+> "In production" to get long-lived tokens (no Google review is required for
+> the `calendar.readonly` scope on your own accounts — just click through the
+> unverified-app warning).
 
 ### 4. Run locally
 
